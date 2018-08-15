@@ -1,0 +1,18 @@
+
+Spark学习笔记——spark shuffle过程
+Posted on 2017-03-02 | In Spark |
+MapReduce中的shuffle机制
+
+在MapReduce框架中，shuffle是连接Map和Reduce之间的桥梁，Map的输出要用到Reduce中必须经过shuffle这个环节，shuffle的性能高低直接影响了整个程序的性能和吞吐量。
+
+Shuffle是MapReduce框架中的一个特定的phase，介于Map phase和Reduce phase之间，当Map的输出结果要被Reduce使用时，输出结果需要按key哈希，并且分发到每一个Reducer上去，这个过程就是shuffle。由于shuffle涉及到了磁盘的读写和网络的传输，因此shuffle性能的高低直接影响到了整个程序的运行效率。
+
+下图描述了MapReduce算法的整个流程，其中shuffle phase是介于Map phase和Reduce phase之间：
+
+在Hadoop, 在mapper端每次当memory buffer中的数据快满的时候, 先将memory中的数据, 按partition进行划分, 然后各自存成小文件, 这样当buffer不断的spill的时候, 就会产生大量的小文件。
+
+所以Hadoop后面直到reduce之前做的所有的事情其实就是不断的merge, 基于文件的多路并归排序,在map端的将相同partition的merge到一起, 在reduce端, 把从mapper端copy来的数据文件进行merge, 以用于最终的reduce多路归并排序, 达到两个目的。
+
+merge, 把相同key的value都放到一个arraylist里面；sort, 最终的结果是按key排序的。
+这个方案扩展性很好, 面对大数据也没有问题, 当然问题在效率, 毕竟需要多次进行基于文件的多路归并排序,多轮的和磁盘进行数据读写。
+
